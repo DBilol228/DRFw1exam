@@ -24,3 +24,16 @@ class PostSerializer(serializers.ModelSerializer):
         return author
     def get_is_popular(self,obj):
         return obj.likes_count >= 10
+
+class LikeSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+    post = serializers.SerializerMethodField()
+    class Meta:
+        model = Like
+        fields = ['id','user','post','created_at']
+    def get_user(self,obj):
+        user = {'id':obj.user.id,'username':obj.user.username}
+        return user
+    def get_post(self,obj):
+        post = {'id':obj.post.id,'title':obj.post.title}
+        return post
