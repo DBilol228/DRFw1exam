@@ -103,3 +103,32 @@ def post_detail(request,pk):
     elif request.method=='DELETE':
         post.delete()
         return Response(status=204)
+
+@api_view(['GET'])
+def post_statistics_detail(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    liked_by = [
+        {'id': like.user.id, 'username': like.user.username}
+        for like in post.like_set.select_related('user').all()
+    ]
+    favorited_by = [
+        {'id': favorite.user.id, 'username': favorite.user.username}
+        for favorite in post.favorite_set.select_related('user').all()
+        ]
+    data = {
+        'id': post.id,
+        'title': post.title,
+        'author': {
+            'id': post.user.id,
+            'username': post.user.username
+        },
+        'views': post.views,
+        'likes_count': len(liked_by),
+        'favorites_count': len(favorited_by),
+        'liked_by': liked_by,
+        'favorited_by': favorited_by,
+        'is_popular': len(liked_by) >= 10,
+        'is_viral': post.views >= 1000,
+        'status': 'has_likes' if liked_by else 'no_likes'
+    }
+    return Response(data, status=200)
