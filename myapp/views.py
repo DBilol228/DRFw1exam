@@ -65,3 +65,41 @@ def profile_detail(request,pk):
     elif request.method=='DELETE':
         profile.delete()
         return Response(status=204)
+
+@api_view(['GET'])
+def profile_city_statistics(request):
+    statistics = Profile.objects.values('city').annotate(users_count=Count('id')).order_by('city')
+    return Response(statistics,status=200)
+
+
+@api_view(['GET','POST'])
+def post_list(request):
+    if request.method=='GET':
+        posts = Post.objects.all()
+        serializer = PostSerializer(posts,many=True)
+        return Response(serializer.data,status=200)
+    elif request.method=='POST':
+        user = get_object_or_404(User,pk=request.data.get('user'))
+        serializer = PostSerializer(data=request.data)
+        if serializer.is_valid():
+            post = serializer.save(user=user)
+            return Response(PostSerializer(post).data,status=201)
+        return Response(serializer.errors,status=400)
+
+@api_view(['GET','PUT','DELETE'])
+def post_detail(request,pk):
+    post = get_object_or_404(Post,pk=pk)
+    if request.method=='GET':
+        serializer = PostSerializer(post)
+        return Response(serializer.data,status=200)
+    elif request.method=='PUT':
+        user_id = request.data.get('user',post.user_id)
+        user = get_object_or_404(User,pk=user_id)
+        serializer = PostSerializer(post,data=request.data)
+        if serializer.is_valid():
+            post = serializer.save(user=user)
+            return Response(PostSerializer(post).data,status=200)
+        return Response(serializer.errors,status=400)
+    elif request.method=='DELETE':
+        post.delete()
+        return Response(status=204)
