@@ -89,9 +89,30 @@ def post_list(request):
 @api_view(['GET','PUT','DELETE'])
 def post_detail(request,pk):
     post = get_object_or_404(Post,pk=pk)
-    if request.method=='GET':
-        serializer = PostSerializer(post)
-        return Response(serializer.data,status=200)
+    if request.method == 'GET':
+        liked_by = [
+            {'id': like.user.id, 'username': like.user.username}
+            for like in post.like_set.select_related('user').all()
+        ]
+        favorited_by = [
+            {'id': favorite.user.id, 'username': favorite.user.username}
+            for favorite in post.favorite_set.select_related('user').all()
+        ]
+        data = {
+            'id': post.id,
+            'title': post.title,
+            'author': {
+                'id': post.user.id,
+                'username': post.user.username,
+            },
+            'views': post.views,
+            'likes_count': len(liked_by),
+            'favorites_count': len(favorited_by),
+            'liked_by': liked_by,
+            'favorited_by': favorited_by,
+            'is_popular': len(liked_by) >= 10,
+        }
+        return Response(data, status=200)
     elif request.method=='PUT':
         user_id = request.data.get('user',post.user_id)
         user = get_object_or_404(User,pk=user_id)
@@ -105,30 +126,24 @@ def post_detail(request,pk):
         return Response(status=204)
 
 @api_view(['GET'])
-def post_statistics_detail(request, pk):
-    post = get_object_or_404(Post, pk=pk)
-    liked_by = [
-        {'id': like.user.id, 'username': like.user.username}
-        for like in post.like_set.select_related('user').all()
-    ]
-    favorited_by = [
-        {'id': favorite.user.id, 'username': favorite.user.username}
-        for favorite in post.favorite_set.select_related('user').all()
-        ]
+def user_statistics_detail(request, pk):
+    user = get_object_or_404(User, pk=pk)
+    profile = Profile.objects.filter(user=user).first()
+    posts = Post.objects.filter(user=user)
     data = {
-        'id': post.id,
-        'title': post.title,
-        'author': {
-            'id': post.user.id,
-            'username': post.user.username
+        'id': user.id,
+        'username': user.username,
+        'full_name': f'{user.first_name} {user.last_name}',
+        'age': user.age,
+        'profile': {
+            'bio': profile.bio if profile else None,
+            'city': profile.city if profile else None,
         },
-        'views': post.views,
-        'likes_count': len(liked_by),
-        'favorites_count': len(favorited_by),
-        'liked_by': liked_by,
-        'favorited_by': favorited_by,
-        'is_popular': len(liked_by) >= 10,
-        'is_viral': post.views >= 1000,
-        'status': 'has_likes' if liked_by else 'no_likes'
+        'stats': {
+            'posts_count': posts.count(),
+            'total_views': posts.aggregate(total=Sum('views'))['total'] or 0,
+            'likes_received': Like.objects.filter(post__user=user).count(),
+            'favorites_received': Favorite.objects.filter(post__user=user).count(),
+        }
     }
     return Response(data, status=200)
