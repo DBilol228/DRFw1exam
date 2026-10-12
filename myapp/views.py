@@ -282,3 +282,20 @@ def like_delete(request, pk):
     like = get_object_or_404(Like, pk=pk)
     like.delete()
     return Response(status=204)
+
+@api_view(['GET'])
+def post_likes(request, pk):
+    post = get_object_or_404(Post, pk=pk)
+    likes = Like.objects.filter(post=post).select_related('user')
+    data = {
+        'post_id': post.id,
+        'likes_count': likes.count(),
+        'users': [
+            {
+                'id': like.user.id,
+                'username': like.user.username,
+            }
+            for like in likes
+        ],
+    }
+    return Response(data, status=200)
