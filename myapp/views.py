@@ -202,3 +202,25 @@ def popular_posts(request):
         for post in posts
     ]
     return Response(data, status=200)
+
+@api_view(['GET'])
+def search_posts(request):
+    query = request.query_params.get('q', '')
+    posts = Post.objects.filter(Q(title__icontains=query) |Q(content__icontains=query))
+    serializer = PostSerializer(posts, many=True)
+    return Response(serializer.data, status=200)
+
+@api_view(['GET'])
+def filter_posts(request):
+    posts = Post.objects.all()
+    min_views = request.query_params.get('min_views')
+    max_views = request.query_params.get('max_views')
+    user_id = request.query_params.get('user_id')
+    if min_views is not None:
+        posts = posts.filter(views__gte=min_views)
+    if max_views is not None:
+        posts = posts.filter(views__lte=max_views)
+    if user_id is not None:
+        posts = posts.filter(user_id=user_id)
+    serializer = PostSerializer(posts, many=True)
+    return Response(serializer.data, status=200)

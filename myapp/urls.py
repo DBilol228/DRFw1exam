@@ -1,5 +1,7 @@
 from django.urls import path
-from .views import user_list,user_detail,profile_list,profile_detail,profile_city_statistics,post_list,post_detail,user_statistics_detail,user_statistics,most_active_users,user_posts,popular_posts
+from .views import (user_list,user_detail,profile_list,profile_detail,profile_city_statistics,post_list,
+                    post_detail,user_statistics_detail,user_statistics,most_active_users,user_posts,popular_posts,
+                    search_posts,filter_posts,)
 
 urlpatterns = [
     path('users/',user_list),
@@ -14,4 +16,6 @@ urlpatterns = [
     path('users/mostactive/',most_active_users),
     path('users/<int:pk>/posts/',user_posts),
     path('posts/popular/',popular_posts),
+    path('posts/search/',search_posts),
+    path('posts/filter/',filter_posts),
 ]
