@@ -238,3 +238,26 @@ def post_statistics(request):
     statistics['total_likes'] = Like.objects.count()
     statistics['total_favorites'] = Favorite.objects.count()
     return Response(statistics, status=200)
+
+@api_view(['GET'])
+def author_statistics(request):
+    user_id = request.query_params.get('user_id')
+    if not user_id:
+        return Response({'error': 'user_id is required'},status=400)
+    user = get_object_or_404(User, pk=user_id)
+    posts = Post.objects.filter(user=user)
+    data = {
+        'user_id': user.id,
+        'username': user.username,
+        'posts_count': posts.count(),
+        'total_views': posts.aggregate(
+            total=Sum('views')
+        )['total'] or 0,
+        'average_views': posts.aggregate(
+            average=Avg('views')
+        )['average'] or 0,
+        'likes_received': Like.objects.filter(
+            post__user=user
+        ).count(),
+    }
+    return Response(data, status=200)
