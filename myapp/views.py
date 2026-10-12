@@ -166,7 +166,7 @@ def most_active_users(request):
         'posts_count': user.posts_count,}for user in users]
     return Response(data, status=200)
 
-@api_view('GET')
+@api_view(['GET'])
 def user_posts(resuest,pk):
     user = get_object_or_404(User,pk=pk)
     posts = Post.objects.filter(user=user)
@@ -186,4 +186,19 @@ def user_posts(resuest,pk):
             for post in posts
         ],
     }
+    return Response(data, status=200)
+
+@api_view(['GET'])
+def popular_posts(request):
+    posts = Post.objects.annotate(likes_count=Count('like')).filter(likes_count__gte=10).order_by('-likes_count')
+    data = [
+        {
+            'id': post.id,
+            'title': post.title,
+            'likes_count': post.likes_count,
+            'favorites_count': post.favorite_set.count(),
+            'is_popular': post.likes_count >= 10,
+        }
+        for post in posts
+    ]
     return Response(data, status=200)
