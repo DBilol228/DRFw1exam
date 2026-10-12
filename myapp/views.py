@@ -147,3 +147,10 @@ def user_statistics_detail(request, pk):
         }
     }
     return Response(data, status=200)
+
+
+@api_view(['GET'])
+def user_statistics(request):
+    statistics = User.objects.aggregate(total_users=Count('id'),average_age=Avg('age'),min_age=Min('age'),max_age=Max('age'),)
+    return Response(statistics, status=200)
+
