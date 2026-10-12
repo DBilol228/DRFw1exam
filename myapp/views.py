@@ -101,6 +101,7 @@ def post_detail(request,pk):
         data = {
             'id': post.id,
             'title': post.title,
+            'content': post.content,
             'author': {
                 'id': post.user.id,
                 'username': post.user.username,
@@ -111,6 +112,7 @@ def post_detail(request,pk):
             'liked_by': liked_by,
             'favorited_by': favorited_by,
             'is_popular': len(liked_by) >= 10,
+            'created_at': post.created_at,
         }
         return Response(data, status=200)
     elif request.method=='PUT':
@@ -167,7 +169,7 @@ def most_active_users(request):
     return Response(data, status=200)
 
 @api_view(['GET'])
-def user_posts(resuest,pk):
+def user_posts(request,pk):
     user = get_object_or_404(User,pk=pk)
     posts = Post.objects.filter(user=user)
     data = {
@@ -262,9 +264,21 @@ def author_statistics(request):
     }
     return Response(data, status=200)
 
-
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 def like_list(request):
-    likes = Like.objects.select_related('user', 'post').all()
-    serializer = LikeSerializer(likes, many=True)
-    return Response(serializer.data, status=200)
+    if request.method == 'GET':
+        likes = Like.objects.select_related('user', 'post').all()
+        serializer = LikeSerializer(likes, many=True)
+        return Response(serializer.data, status=200)
+    user = get_object_or_404(User, pk=request.data.get('user'))
+    post = get_object_or_404(Post, pk=request.data.get('post'))
+    if Like.objects.filter(user=user, post=post).exists():
+        return Response({'error': 'You have already liked this post'},status=400)
+    like = Like.objects.create(user=user, post=post)
+    return Response(LikeSerializer(like).data, status=201)
+
+@api_view(['DELETE'])
+def like_delete(request, pk):
+    like = get_object_or_404(Like, pk=pk)
+    like.delete()
+    return Response(status=204)
