@@ -28,7 +28,7 @@ def user_detail(request,pk):
         serializer = UserSerializer(user,data=request.data)
         if serializer.is_valid():
             serializer.save()
-            return Response(serializer.data,status=201)
+            return Response(serializer.data,status=200)
         return Response(serializer.errors,status=400)
     elif request.method=='DELETE':
         user.delete()
@@ -164,4 +164,26 @@ def most_active_users(request):
         'username': user.username,
         'full_name': f'{user.first_name} {user.last_name}',
         'posts_count': user.posts_count,}for user in users]
+    return Response(data, status=200)
+
+@api_view('GET')
+def user_posts(resuest,pk):
+    user = get_object_or_404(User,pk=pk)
+    posts = Post.objects.filter(user=user)
+    data = {
+        'user': {
+            'id': user.id,
+            'username': user.username,
+        },
+        'posts_count': posts.count(),
+        'results': [
+            {
+                'id': post.id,
+                'title': post.title,
+                'likes_count': post.like_set.count(),
+                'views': post.views,
+            }
+            for post in posts
+        ],
+    }
     return Response(data, status=200)
