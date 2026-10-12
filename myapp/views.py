@@ -154,3 +154,14 @@ def user_statistics(request):
     statistics = User.objects.aggregate(total_users=Count('id'),average_age=Avg('age'),min_age=Min('age'),max_age=Max('age'),)
     return Response(statistics, status=200)
 
+
+@api_view(['GET'])
+def most_active_users(request):
+    users = User.objects.annotate(posts_count=Count('post')).order_by('-posts_count')[:10]
+    data = [
+        {
+        'id': user.id,
+        'username': user.username,
+        'full_name': f'{user.first_name} {user.last_name}',
+        'posts_count': user.posts_count,}for user in users]
+    return Response(data, status=200)
