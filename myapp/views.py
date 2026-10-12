@@ -261,3 +261,10 @@ def author_statistics(request):
         ).count(),
     }
     return Response(data, status=200)
+
+
+@api_view(['GET'])
+def like_list(request):
+    likes = Like.objects.select_related('user', 'post').all()
+    serializer = LikeSerializer(likes, many=True)
+    return Response(serializer.data, status=200)
