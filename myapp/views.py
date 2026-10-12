@@ -224,3 +224,17 @@ def filter_posts(request):
         posts = posts.filter(user_id=user_id)
     serializer = PostSerializer(posts, many=True)
     return Response(serializer.data, status=200)
+
+
+@api_view(['GET'])
+def post_statistics(request):
+    statistics = Post.objects.aggregate(
+        total_posts=Count('id'),
+        total_views=Sum('views'),
+        average_views=Avg('views'),
+        max_views=Max('views'),
+        min_views=Min('views'),
+        )
+    statistics['total_likes'] = Like.objects.count()
+    statistics['total_favorites'] = Favorite.objects.count()
+    return Response(statistics, status=200)

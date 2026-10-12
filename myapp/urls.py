@@ -1,12 +1,13 @@
 from django.urls import path
 from .views import (user_list,user_detail,profile_list,profile_detail,profile_city_statistics,post_list,
                     post_detail,user_statistics_detail,user_statistics,most_active_users,user_posts,popular_posts,
-                    search_posts,filter_posts,)
+                    search_posts,filter_posts,post_statistics)
 
 urlpatterns = [
     path('users/',user_list),
     path('user/<int:pk>',user_detail),
     path('profiles/',profile_list),
+    path('posts/statistics/',post_statistics),
     path('profile/<int:pk>',profile_detail),
     path('profiles/city-statistics/', profile_city_statistics),
     path('posts',post_list),
